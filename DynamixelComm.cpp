@@ -521,9 +521,24 @@ DynamixelComm::Ping(int id)
 #define MAX_FAILED_READS 1
 
 #ifdef __APPLE__
-#include <IOKit/serial/ioss.h>
-#include <sys/ioctl.h>
+# include <IOKit/serial/ioss.h>
+# include <sys/ioctl.h>
+#elif __arm__
+# include <stdlib.h>
+# include <errno.h>
+# include <wiringSerial.h> // this is the IOSerialStream for RPi
+# include <termio.h>
+# include <linux/serial.h>
+# include <sys/types.h>
+# include <sys/stat.h>
+# include <sys/ioctl.h> // from mac
+# include <fcntl.h>
+# include <termios.h>
+# include <unistd.h>     //added for read() write()
 #endif
+
+
+
 
 
 
