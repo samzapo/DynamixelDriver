@@ -21,6 +21,12 @@
 #define RX_24F_SPEED2RPS 0.01193805206999423 // 1 unit = 0.114rpm = 0.01193805206999423 rad/sec
 #define MX_64R_RPS2SPEED 86.0296990669
 #define RX_24F_RPS2SPEED 83.7657596178
+
+#ifdef __APPLE__
+# define DEVICE_NAME "/dev/tty.usbserial-A9YL9ZZV"
+#elif __arm__
+# define DEVICE_NAME "/dev/ttyUSB0"
+#endif
 using namespace DXL;
 const double RX_CENTER               = 512;
 const double MX_CENTER               = 2047;
@@ -242,10 +248,10 @@ void Dynamixel::set_torque(const double* t){
 int main(int argc,char* argv[]){
   bool use_class = true;
   if(use_class){
-    Dynamixel::init("/dev/tty.usbserial-A9YL9ZZV",1000000);
+    Dynamixel::init(DEVICE_NAME,1000000);
   } else {
     int speed[N_JOINTS] = {100,  100,100,100,100,  100,100,100,100,  100,100,100,100};
-    dxl_ = new DynamixelComm("/dev/tty.usbserial-A9YL9ZZV",1000000);
+    dxl_ = new DynamixelComm(DEVICE_NAME,1000000);
     dxl_->SetReturnLevel(ALL_SERVOS,1);      // Return only for the READ command
     dxl_->EnableTorque(ALL_SERVOS, 1);
 
