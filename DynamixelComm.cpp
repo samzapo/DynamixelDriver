@@ -526,7 +526,7 @@ DynamixelComm::Ping(int id)
 #elif __arm__
 # include <stdlib.h>
 # include <errno.h>
-# include <wiringSerial.h> // this is the IOSerialStream for RPi
+//# include <wiringSerial.h> // this is the IOSerialStream for RPi
 # include <termio.h>
 # include <linux/serial.h>
 # include <sys/types.h>

@@ -22,11 +22,6 @@
 #define MX_64R_RPS2SPEED 86.0296990669
 #define RX_24F_RPS2SPEED 83.7657596178
 
-#ifdef __APPLE__
-# define DEVICE_NAME "/dev/tty.usbserial-A9YL9ZZV"
-#elif __arm__
-# define DEVICE_NAME "/dev/ttyUSB0"
-#endif
 using namespace DXL;
 const double RX_CENTER               = 512;
 const double MX_CENTER               = 2047;
