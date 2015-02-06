@@ -9,14 +9,14 @@ INCLUDE_DIRECTORIES(
   include
 )
 
-link_directories(.)
+link_directories(/usr/local/lib /usr/lib .)
 
 # build libraries
 ADD_LIBRARY(dxl_comm
  DynamixelComm.cpp
 )
 ADD_LIBRARY(dxl
- DynamixelComm.cpp
+ Dynamixel.cpp
 )
 
 target_link_libraries(
@@ -32,11 +32,7 @@ install (TARGETS dxl DESTINATION lib)
 install (DIRECTORY ${CMAKE_SOURCE_DIR}/include/dxl DESTINATION include)
 
 # build test
-ADD_EXECUTABLE(dxl_test
-  TestDynamixel.cpp
-)
+ADD_EXECUTABLE(dxl_test TestDynamixel.cpp)
 
-target_link_libraries(
-  dxl_test dxl Ravelin
-)
+target_link_libraries(dxl_test dxl Ravelin)
 

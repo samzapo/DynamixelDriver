@@ -25,18 +25,18 @@
 using namespace DXL;
 const double RX_CENTER               = 512;
 const double MX_CENTER               = 2047;
-const double zeros[N_JOINTS]         = {0,  0,0,0,0,  0,0,0,0,  0,0,0,0};
-const int izeros[N_JOINTS]         = {0,  0,0,0,0,  0,0,0,0,  0,0,0,0};
-const int    q_tare[N_JOINTS]        = {RX_CENTER,  RX_CENTER,RX_CENTER,RX_CENTER,RX_CENTER,  RX_CENTER,RX_CENTER,MX_CENTER-60,MX_CENTER-190, RX_CENTER,RX_CENTER,RX_CENTER,RX_CENTER};
-const int    q_offset[N_JOINTS]      = {0,  0,0,0,0,  RX_CENTER/4,-RX_CENTER/4,-MX_CENTER/4,MX_CENTER/4, RX_CENTER/2 + 100,-RX_CENTER/2 - 100,-RX_CENTER/2 - 100,RX_CENTER/2 + 100};
-const double q_max[N_JOINTS]         = {RX_24F_MAXUNIT,  RX_24F_MAXUNIT,RX_24F_MAXUNIT,RX_24F_MAXUNIT,RX_24F_MAXUNIT,   RX_24F_MAXUNIT,RX_24F_MAXUNIT,MX_64R_MAXUNIT,MX_64R_MAXUNIT,   RX_24F_MAXUNIT,RX_24F_MAXUNIT,RX_24F_MAXUNIT,RX_24F_MAXUNIT};
-const double q_init[N_JOINTS]        = {M_PI/6,  M_PI/6,M_PI/6,M_PI/6,M_PI/6,  M_PI/6,M_PI/6,0,0,M_PI/6,M_PI/6,M_PI/6,M_PI/6};
+const double zeros[N_JOINTS]         = {  0,0,0,0,  0,0,0,0,  0,0,0,0};
+const int izeros[N_JOINTS]         = {  0,0,0,0,  0,0,0,0,  0,0,0,0};
+const int    q_tare[N_JOINTS]        = { RX_CENTER,RX_CENTER,RX_CENTER,RX_CENTER,  RX_CENTER,RX_CENTER,MX_CENTER-60,MX_CENTER-190, RX_CENTER,RX_CENTER,RX_CENTER,RX_CENTER};
+const int    q_offset[N_JOINTS]      = { 0,0,0,0,  RX_CENTER/4,-RX_CENTER/4,-MX_CENTER/4,MX_CENTER/4, RX_CENTER/2 + 100,-RX_CENTER/2 - 100,-RX_CENTER/2 - 100,RX_CENTER/2 + 100};
+const double q_max[N_JOINTS]         = {RX_24F_MAXUNIT,RX_24F_MAXUNIT,RX_24F_MAXUNIT,RX_24F_MAXUNIT,   RX_24F_MAXUNIT,RX_24F_MAXUNIT,MX_64R_MAXUNIT,MX_64R_MAXUNIT,   RX_24F_MAXUNIT,RX_24F_MAXUNIT,RX_24F_MAXUNIT,RX_24F_MAXUNIT};
+const double q_init[N_JOINTS]        = {M_PI/6,M_PI/6,M_PI/6,M_PI/6,  M_PI/6,M_PI/6,0,0,M_PI/6,M_PI/6,M_PI/6,M_PI/6};
 
 const int
     RX_24F = 0,
     MX_64R = 1;
 
-const int stype[N_JOINTS] = {RX_24F,RX_24F,RX_24F,RX_24F,RX_24F,RX_24F,RX_24F,MX_64R,MX_64R,RX_24F,RX_24F,RX_24F,RX_24F};
+const int stype[N_JOINTS] = {RX_24F,RX_24F,RX_24F,RX_24F,    RX_24F,RX_24F,MX_64R,MX_64R,   RX_24F,RX_24F,RX_24F,RX_24F};
 
 const int ALL_SERVOS = 0xFE;
 
@@ -71,15 +71,6 @@ static DynamixelComm* dxl_;
   return abs(qd) * ((stype[i] == MX_64R)? MX_64R_RPS2SPEED : RX_24F_RPS2SPEED);
 }
 
-void Dynamixel::init(const char * device_name, unsigned long baud_rate){
-  dxl_ = new DynamixelComm(device_name,baud_rate);
-  dxl_->SetReturnLevel(ALL_SERVOS,1);      // Return only for the READ command
-  dxl_->EnableTorque(ALL_SERVOS, 1);
-  int speed[N_JOINTS] = {100,  100,100,100,100,  100,100,100,100,  100,100,100,100};
-  dxl_->SyncState((int*)q_tare,(int*)speed);
-  sleep(3);
-  std::cout << "Robot was inited from Dynamixels at: " << device_name << std::endl;
-}
 
 void Dynamixel::relaxed(bool torque_off){
   dxl_->EnableTorque(ALL_SERVOS,(torque_off)?0:1);
@@ -88,7 +79,7 @@ void Dynamixel::relaxed(bool torque_off){
 /// set velocity (to goal pos)
 void Dynamixel::set_velocity(const double qd[N_JOINTS]){
   static int valqd;
-  for(int i=BODY_JOINT;i<N_JOINTS;i++){
+  for(int i=0;i<N_JOINTS;i++){
     valqd = (stype[i] == MX_64R)? qd[i]*MX_64R_RPS2SPEED : /* else RX-24F */ qd[i]*RX_24F_RPS2SPEED;
     dxl_->SetTorque(i,1023);
     dxl_->SetSpeed(i,valqd);
@@ -98,7 +89,7 @@ void Dynamixel::set_velocity(const double qd[N_JOINTS]){
 /// set goal pose
 void Dynamixel::set_position(const double * q){
   int qi[N_JOINTS];
-  for(int i=BODY_JOINT;i<N_JOINTS;i++){
+  for(int i=0;i<N_JOINTS;i++){
     qi[i] = convert_position(i,q[i]);
   }
   dxl_->SyncState((int*)qi,(int*)izeros);
@@ -106,7 +97,7 @@ void Dynamixel::set_position(const double * q){
 
 void Dynamixel::set_state(const double * q,const double * qd){
   int qi[N_JOINTS], qid[N_JOINTS];
-  for(int i=BODY_JOINT;i<N_JOINTS;i++){
+  for(int i=0;i<N_JOINTS;i++){
     qi[i] = convert_position(i,q[i]);
     qid[i] = convert_velocity(i,qd[i]);
   }
@@ -115,7 +106,7 @@ void Dynamixel::set_state(const double * q,const double * qd){
 }
 
 void Dynamixel::set_joint_limits(const double* cw_lower,const double* ccw_upper){
-  for(int i=BODY_JOINT;i<N_JOINTS;i++)
+  for(int i=0;i<N_JOINTS;i++)
     dxl_->SetPositionClamp(i,convert_position(i,cw_lower[i]),convert_position(i,ccw_upper[i]));
 }
 
@@ -124,7 +115,7 @@ void Dynamixel::get_state( double * q, double * qd, double * u){
   dxl_->GetPosition(ALL_SERVOS,qi);
   dxl_->GetSpeed(ALL_SERVOS,qid);
   dxl_->GetLoad(ALL_SERVOS,ui);
-  for(int i=BODY_JOINT;i<N_JOINTS;i++){
+  for(int i=0;i<N_JOINTS;i++){
     q[i] = convert_position(i,qi[i]);
     qd[i] = convert_velocity(i,qid[i]);
     u[i] = ui[i];
@@ -135,7 +126,7 @@ void Dynamixel::get_state( double * q, double * qd, double * u){
 /*
 void Dynamixel::get_robot_state(){
     unsigned char * buffer[N_JOINTS];
-    for(int i=BODY_JOINT;i<N_JOINTS;i++){
+    for(int i=0;i<N_JOINTS;i++){
         ReadAllData(i,buffer[i]);
         for(int i=ID;i<N_OPTIONS;i++)
             std::string translateValue(buffer[i]);
@@ -231,7 +222,7 @@ std::string translateValue(unsigned int value atAddress, unsigned int address)
 
 void Dynamixel::set_torque(const double* t){
   static int valt,valq;
-  for(int i=BODY_JOINT;i<N_JOINTS;i++){
+  for(int i=0;i<N_JOINTS;i++){
     valt = (stype[i] == MX_64R)? (fabs(t[i])/MX_64R_MAXTORQUE)*1023 : (fabs(t[i])/RX_24F_MAXTORQUE)*1023;
     if(valt > 1023) valt = 1023;
     valq = (t[i]>=0)? ((stype[i] == MX_64R)? MX_64R_MAXUNIT:RX_24F_MAXUNIT) : 0;
@@ -240,25 +231,26 @@ void Dynamixel::set_torque(const double* t){
   }
 }
 
-int main(int argc,char* argv[]){
-  bool use_class = true;
-  if(use_class){
-    Dynamixel::init(DEVICE_NAME,1000000);
-  } else {
-    int speed[N_JOINTS] = {100,  100,100,100,100,  100,100,100,100,  100,100,100,100};
-    dxl_ = new DynamixelComm(DEVICE_NAME,1000000);
-    dxl_->SetReturnLevel(ALL_SERVOS,1);      // Return only for the READ command
-    dxl_->EnableTorque(ALL_SERVOS, 1);
 
-    dxl_->SyncState((int*)q_tare,(int*)speed);
+void Dynamixel::init(const char * device_name, unsigned long baud_rate){
+  std::cout << "Initing dynamixels at: " << device_name << std::endl;
+  std::cout << "Baud Rate: " << baud_rate << std::endl;
+  dxl_ = new DynamixelComm(device_name,baud_rate);
+  std::cout << "Device inited" << std::endl;
+  dxl_->SetReturnLevel(ALL_SERVOS,1);      // Return only for the READ command
+  dxl_->EnableTorque(ALL_SERVOS, 1);
 
-    for(int i=0;i<N_JOINTS;i++){
-      fprintf(stdout, "Pinging: %d\n", dxl_->Ping(i));
-//      dxl_->SetState(i, q_tare[i],0);
-    }
+  dxl_->SetLED(ALL_SERVOS, 1); 
+
+  int speed[N_JOINTS] = { 100,100,100,100,  100,100,100,100,  100,100,100,100};
+  std::cout << "has " << N_JOINTS << " joints" << std::endl;
+  for(int i=0;i<N_JOINTS;i++){
+   std::cout << "Joint " << JointName(i) << ": (" << q_tare[i] << " , " << speed[i] << ")" << std::endl;
   }
-
-  return 0;
+  dxl_->SyncState((int*)q_tare,(int*)speed);
+  
+  dxl_->SetLED(ALL_SERVOS, 0); 
+  std::cout << "Robot was inited from Dynamixels at: " << device_name << std::endl;
 }
 
 #undef MX_64R_MAXTORQUE

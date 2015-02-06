@@ -8,8 +8,6 @@
 
 namespace DXL{
 const int
-    // Body Sagittal Flexion
-    BODY_JOINT = 0,
     // Hip Coronal Flexion
     LF_HIP_AA = 1,
     RF_HIP_AA = 2,
@@ -26,7 +24,7 @@ const int
     LH_LEG_FE = 11,
     RH_LEG_FE = 12,
     // Num int
-    N_JOINTS = 13;
+    N_JOINTS = 12;
 
 inline double wrapAngle2( double angle )
 {
@@ -56,7 +54,6 @@ public:
   static void relaxed(bool torque_off);
   static std::string JointName(int j){
     switch(j){
-    case BODY_JOINT: return "BODY_JOINT";
     case LF_HIP_AA:return "LF_HIP_AA";
     case RF_HIP_AA:return "RF_HIP_AA";
     case LH_HIP_AA:return "LH_HIP_AA";
