@@ -25,6 +25,8 @@
 // THIS IS THE NEW COMM
 
 #include <dxl/DynamixelComm.h>
+#include <stdio.h>
+#include <iostream>
 
 DynamixelComm::DynamixelComm(const char * serial_device, unsigned long baud_rate):
   Serial(serial_device, baud_rate)
@@ -166,40 +168,45 @@ DynamixelComm::SetState(int id, int pos, int speed)
 }
 
 int
-DynamixelComm::SyncState(int * pos, int * speed)
+DynamixelComm::SyncState(std::vector<int> id, std::vector<int> pos, std::vector<int> speed)
 {
 //INST_SYNC_WRITE
 #ifndef NDEBUG
-  for(int i=0;i<12;i++){
-    fprintf(stdout, "%d \t %d\n",pos[i],speed[i]);
-    fprintf(stdout, "[0x%X 0x%X] \t [0x%X 0x%X]\n",pos[i] % 0x100, pos[i] / 0x100, speed[i] % 0x100, speed[i] / 0x100);
+  for(int i=0;i<id.size();i++){
+    fprintf(stdout, "%d :\t %d \t %d\n",id[i],pos[i],speed[i]);
+    //fprintf(stdout, "0x%X : [0x%X 0x%X] \t [0x%X 0x%X]\n",id[i],pos[i] / 0x100, pos[i] % 0x100, speed[i] / 0x100, speed[i] % 0x100);
   }
 #endif
-  unsigned char outbuf[8*((5+1)*13+4 + 8)] =
+
+  std::stringstream ss;
+  //unsigned char outbuf[8*((5+1)*12+4 + 8)] =
  //fill, fill, ALL , (L+1)*N+4 ,  command type  , write to (lowest),  L = length,
-  {0XFF, 0XFF, 0xFE, (4+1)*13+4, INST_SYNC_WRITE, P_GOAL_POSITION_L, 0x04,
+  unsigned char fill = 0xFF;
+  unsigned char ALL = 0xFE;
+  unsigned char size_output = (4+1)*id.size()+4;
+  unsigned char length = 0x04;
+  unsigned char sync_w = INST_SYNC_WRITE;
+  unsigned char goal_pos = P_GOAL_POSITION_L;
+
+  ss << fill << fill << ALL << size_output << sync_w << goal_pos << length;
+  //std::cout << 0XFF << 0XFF << 0xFE << (unsigned short) (4+1)*id.size()+4 << (unsigned short) INST_SYNC_WRITE << (unsigned short) P_GOAL_POSITION_L << 0x04 << std::endl;
   //ID, pos_L            POS_H            VEL_L              VEL_H
-    1, pos[0 ] % 0x100, pos[0 ] / 0x100, speed[0 ] % 0x100, speed[0 ] / 0x100,
-    2, pos[1 ] % 0x100, pos[1 ] / 0x100, speed[1 ] % 0x100, speed[1 ] / 0x100,
-    3, pos[2 ] % 0x100, pos[2 ] / 0x100, speed[2 ] % 0x100, speed[2 ] / 0x100,
-    4, pos[3 ] % 0x100, pos[3 ] / 0x100, speed[3 ] % 0x100, speed[3 ] / 0x100,
-    5, pos[4 ] % 0x100, pos[4 ] / 0x100, speed[4 ] % 0x100, speed[4 ] / 0x100,
-    6, pos[5 ] % 0x100, pos[5 ] / 0x100, speed[5 ] % 0x100, speed[5 ] / 0x100,
-    7, pos[6 ] % 0x100, pos[6 ] / 0x100, speed[6 ] % 0x100, speed[6 ] / 0x100,
-    8, pos[7 ] % 0x100, pos[7 ] / 0x100, speed[7 ] % 0x100, speed[7 ] / 0x100,
-    9, pos[8 ] % 0x100, pos[8 ] / 0x100, speed[8 ] % 0x100, speed[8 ] / 0x100,
-   10, pos[9 ] % 0x100, pos[9 ] / 0x100, speed[9 ] % 0x100, speed[9 ] / 0x100,
-   11, pos[10] % 0x100, pos[10] / 0x100, speed[10] % 0x100, speed[10] / 0x100,
-   12, pos[11] % 0x100, pos[11] / 0x100, speed[11] % 0x100, speed[11] / 0x100;
-
-#ifndef NDEBUG
-  for(int i=0;i<2+(4+1)*13+4;i++)
-    fprintf(stdout, " 0x%X ",outbuf[i]);
-#endif
-
-  unsigned char inbuf[32*8*13];
-  Send(outbuf);
-//      Receive(inbuf);
+  for(int i=0;i<id.size();i++){
+    unsigned char i1 = id[i] % 0x100;
+    unsigned char p1 = pos[i] % 0x100;
+    unsigned char p2 = pos[i] / 0x100;
+    unsigned char s1 = speed[i] % 0x100;
+    unsigned char s2 = speed[i] / 0x100;
+    
+    //ss <<(unsigned) id[i] % 0x100 <<(unsigned) pos[i] % 0x100 <<(unsigned) pos[i] / 0x100 <<(unsigned short) speed[i] % 0x100 <<(unsigned short) speed[i] / 0x100;
+    ss << i1 << p1 << p2 << s1 << s2;
+    //std::cout << id[i] / 0x100 << pos[i] % 0x100 << pos[i] / 0x100 << speed[i] % 0x100 << speed[i] / 0x100 << std::endl;
+  }
+  const char* s = ss.str().c_str();
+  for(int i=0;i<ss.str().size();i++)
+    fprintf(stdout," 0x%X",(const unsigned char)s[i]);
+  unsigned char* output = (unsigned char*) s;
+  Send(output);
 
   return 1;
 }
@@ -535,8 +542,6 @@ DynamixelComm::Ping(int id)
 # include <termios.h>
 //# include <unistd.h>     //added for read() write()
 #endif
-#include <stdio.h>
-#include <iostream>
 
 
 

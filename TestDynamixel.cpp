@@ -15,12 +15,12 @@ int main(int argc,char* argv[]){
   std::cout << "Device inited" << std::endl;
   
 
-  Ravelin::VectorNd q,qd,u;
+  //Ravelin::VectorNd q,qd,u;
 
-  Dynamixel::get_state(q.data(),qd.data(),u.data());
+//  Dynamixel::get_state(q.data(),qd.data(),u.data());
 
-  std::cout << "q: " << q << std::endl;
-  std::cout << "qd: " << qd << std::endl;
+  //std::cout << "q: " << q << std::endl;
+  //std::cout << "qd: " << qd << std::endl;
 
   return 0;
 }

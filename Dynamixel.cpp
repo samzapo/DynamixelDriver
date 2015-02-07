@@ -27,7 +27,7 @@ const double RX_CENTER               = 512;
 const double MX_CENTER               = 2047;
 const double zeros[N_JOINTS]         = {  0,0,0,0,  0,0,0,0,  0,0,0,0};
 const int izeros[N_JOINTS]         = {  0,0,0,0,  0,0,0,0,  0,0,0,0};
-const int    q_tare[N_JOINTS]        = { RX_CENTER,RX_CENTER,RX_CENTER,RX_CENTER,  RX_CENTER,RX_CENTER,MX_CENTER-60,MX_CENTER-190, RX_CENTER,RX_CENTER,RX_CENTER,RX_CENTER};
+const int    q_tare[N_JOINTS]        = { RX_CENTER,RX_CENTER,RX_CENTER,RX_CENTER,  RX_CENTER,RX_CENTER,0,0, RX_CENTER,RX_CENTER,RX_CENTER,RX_CENTER};
 const int    q_offset[N_JOINTS]      = { 0,0,0,0,  RX_CENTER/4,-RX_CENTER/4,-MX_CENTER/4,MX_CENTER/4, RX_CENTER/2 + 100,-RX_CENTER/2 - 100,-RX_CENTER/2 - 100,RX_CENTER/2 + 100};
 const double q_max[N_JOINTS]         = {RX_24F_MAXUNIT,RX_24F_MAXUNIT,RX_24F_MAXUNIT,RX_24F_MAXUNIT,   RX_24F_MAXUNIT,RX_24F_MAXUNIT,MX_64R_MAXUNIT,MX_64R_MAXUNIT,   RX_24F_MAXUNIT,RX_24F_MAXUNIT,RX_24F_MAXUNIT,RX_24F_MAXUNIT};
 const double q_init[N_JOINTS]        = {M_PI/6,M_PI/6,M_PI/6,M_PI/6,  M_PI/6,M_PI/6,0,0,M_PI/6,M_PI/6,M_PI/6,M_PI/6};
@@ -92,7 +92,7 @@ void Dynamixel::set_position(const double * q){
   for(int i=0;i<N_JOINTS;i++){
     qi[i] = convert_position(i,q[i]);
   }
-  dxl_->SyncState((int*)qi,(int*)izeros);
+  //dxl_->SyncState((int*)qi,(int*)izeros);
 }
 
 void Dynamixel::set_state(const double * q,const double * qd){
@@ -102,7 +102,7 @@ void Dynamixel::set_state(const double * q,const double * qd){
     qid[i] = convert_velocity(i,qd[i]);
   }
 
-  dxl_->SyncState(qi,qid);
+  //dxl_->SyncState(qi,qid);
 }
 
 void Dynamixel::set_joint_limits(const double* cw_lower,const double* ccw_upper){
@@ -241,15 +241,21 @@ void Dynamixel::init(const char * device_name, unsigned long baud_rate){
   dxl_->EnableTorque(ALL_SERVOS, 1);
 
   dxl_->SetLED(ALL_SERVOS, 1); 
-
-  int speed[N_JOINTS] = { 100,100,100,100,  100,100,100,100,  100,100,100,100};
-  std::cout << "has " << N_JOINTS << " joints" << std::endl;
-  for(int i=0;i<N_JOINTS;i++){
-   std::cout << "Joint " << JointName(i) << ": (" << q_tare[i] << " , " << speed[i] << ")" << std::endl;
-  }
-  dxl_->SyncState((int*)q_tare,(int*)speed);
   
-  dxl_->SetLED(ALL_SERVOS, 0); 
+  //dxl_->SetPositionClamp(ALL_SERVOS,0,1024);
+
+  std::cout << "has " << N_JOINTS << " joints" << std::endl;
+  std::vector<int> id,pos,speed;
+  for(int i=0;i<N_JOINTS;i++){
+//   dxl_->SetPositionClamp(i+1,0,q_tare[i]*2);
+   std::cout << "Joint " << JointName(i+1) << ": (" << q_tare[i] << " , " << 100 << ")" << std::endl;
+   id.push_back(i+1);
+   pos.push_back(q_tare[i]);
+   speed.push_back(100);
+  }
+  dxl_->SyncState(id,pos,speed);
+
+
   std::cout << "Robot was inited from Dynamixels at: " << device_name << std::endl;
 }
 
