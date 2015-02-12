@@ -32,8 +32,8 @@ const double RX_CENTER               = 512;
 const double MX_CENTER               = 2047;
 const double zeros[N_JOINTS]         = {0,  0,0,0,0,  0,0,0,0,  0,0,0,0};
 const int izeros[N_JOINTS]         = {0,  0,0,0,0,  0,0,0,0,  0,0,0,0};
-const int    q_tare[N_JOINTS]        = {RX_CENTER,  RX_CENTER,RX_CENTER,RX_CENTER,RX_CENTER,  RX_CENTER,RX_CENTER,MX_CENTER-60,MX_CENTER-190, RX_CENTER,RX_CENTER,RX_CENTER,RX_CENTER};
-const int    q_offset[N_JOINTS]      = {0,  0,0,0,0,  RX_CENTER/4,-RX_CENTER/4,-MX_CENTER/4,MX_CENTER/4, RX_CENTER/2 + 100,-RX_CENTER/2 - 100,-RX_CENTER/2 - 100,RX_CENTER/2 + 100};
+const int    q_tare[N_JOINTS]        = {RX_CENTER,  RX_CENTER,RX_CENTER,RX_CENTER,RX_CENTER,  RX_CENTER,RX_CENTER,MX_CENTER-40,MX_CENTER-250, RX_CENTER,RX_CENTER,RX_CENTER,RX_CENTER};
+const int    q_offset[N_JOINTS]      = {0,   0,0,0,0,  M_PI/4 * RX_24F_RAD2UNIT,-M_PI/4 * RX_24F_RAD2UNIT,-MX_CENTER/4,MX_CENTER/4, M_PI/2 * RX_24F_RAD2UNIT,-M_PI/2 * RX_24F_RAD2UNIT,-M_PI/2 * RX_24F_RAD2UNIT,M_PI/2 * RX_24F_RAD2UNIT};
 const double q_max[N_JOINTS]         = {RX_24F_MAXUNIT,  RX_24F_MAXUNIT,RX_24F_MAXUNIT,RX_24F_MAXUNIT,RX_24F_MAXUNIT,   RX_24F_MAXUNIT,RX_24F_MAXUNIT,MX_64R_MAXUNIT,MX_64R_MAXUNIT,   RX_24F_MAXUNIT,RX_24F_MAXUNIT,RX_24F_MAXUNIT,RX_24F_MAXUNIT};
 const double q_init[N_JOINTS]        = {M_PI/6,  M_PI/6,M_PI/6,M_PI/6,M_PI/6,  M_PI/6,M_PI/6,0,0,M_PI/6,M_PI/6,M_PI/6,M_PI/6};
 
@@ -76,13 +76,36 @@ static DynamixelComm* dxl_;
   return abs(qd) * ((stype[i] == MX_64R)? MX_64R_RPS2SPEED : RX_24F_RPS2SPEED);
 }
 
-void Dynamixel::init(const char * device_name, unsigned long baud_rate){
+Dynamixel::Dynamixel(const char * device_name, unsigned long baud_rate){
   dxl_ = new DynamixelComm(device_name,baud_rate);
   dxl_->SetReturnLevel(ALL_SERVOS,1);      // Return only for the READ command
   dxl_->EnableTorque(ALL_SERVOS, 1);
-  int speed[N_JOINTS] = {100,  100,100,100,100,  100,100,100,100,  100,100,100,100};
-  dxl_->SyncState((int*)q_tare,(int*)speed);
-  sleep(3);
+
+//  for(int i=0;i<N_JOINTS;i++){
+//    dxl_->SetPositionClamp(i,0,q_max[i]);
+//    dxl_->SetSpeed(i,0);
+//    speed[i] = 0;
+//  }
+
+//  double t = 0;
+//  while(1){
+//    t += 0.001;
+////    std::cout  << sin(t) << std::endl;
+
+//    int pos[N_JOINTS];
+//    int i=1;
+////    for(int i=0;i<N_JOINTS;i++){
+////  //    fprintf(stdout, "Pinging: %d\n", dxl_->Ping(i));
+//      pos[i] = q_tare[i] + q_offset[i] + 100*sin(t)*0.5;
+//////      std::cout  << i << " : " << pos[i] << std::endl;
+//      dxl_->SetPosition(i,pos[i]);
+//////      fprintf(stdout, "Pinging: %d\n", dxl_->Ping(i));
+
+////    }
+//////    dxl_->Flush();
+////    dxl_->SyncState((int*)pos,(int*)speed);
+//    sleep(0.1);
+//  }
   std::cout << "Robot was inited from Dynamixels at: " << device_name << std::endl;
 }
 
@@ -106,7 +129,9 @@ void Dynamixel::set_position(const double * q){
   for(int i=BODY_JOINT;i<N_JOINTS;i++){
     qi[i] = convert_position(i,q[i]);
   }
-  dxl_->SyncState((int*)qi,(int*)izeros);
+  int speed[N_JOINTS] = {100,  100,100,100,100,  100,100,100,100,  100,100,100,100};
+
+  dxl_->SyncState((int*)qi,(int*)speed);
 }
 
 void Dynamixel::set_state(const double * q,const double * qd){
@@ -245,24 +270,21 @@ void Dynamixel::set_torque(const double* t){
   }
 }
 
+#include <Ravelin/VectorNd.h>
 int main(int argc,char* argv[]){
-  bool use_class = true;
-  if(use_class){
-    Dynamixel::init(DEVICE_NAME,1000000);
-  } else {
-    int speed[N_JOINTS] = {100,  100,100,100,100,  100,100,100,100,  100,100,100,100};
-    dxl_ = new DynamixelComm(DEVICE_NAME,1000000);
-    dxl_->SetReturnLevel(ALL_SERVOS,1);      // Return only for the READ command
-    dxl_->EnableTorque(ALL_SERVOS, 1);
+  Dynamixel dxl(DEVICE_NAME);
 
-    dxl_->SyncState((int*)q_tare,(int*)speed);
+  double t = 0;
+  while(1){
+    t += 0.001;
+//    std::cout  << sin(t) << std::endl;
 
-    for(int i=0;i<N_JOINTS;i++){
-      fprintf(stdout, "Pinging: %d\n", dxl_->Ping(i));
-//      dxl_->SetState(i, q_tare[i],0);
-    }
+    Ravelin::VectorNd zero(N_JOINTS);
+    zero.set_zero();
+    for(int i=0;i<N_JOINTS;i++)
+//      zero[i] = sin(t)*M_PI/16.0;
+      dxl.set_position(zero.data());
   }
-
   return 0;
 }
 

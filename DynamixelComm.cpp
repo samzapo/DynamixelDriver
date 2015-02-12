@@ -169,10 +169,10 @@ int
 DynamixelComm::SyncState(int * pos, int * speed)
 {
 //INST_SYNC_WRITE
-  for(int i=0;i<13;i++){
-    fprintf(stdout, "%d \t %d\n",pos[i],speed[i]);
-    fprintf(stdout, "[0x%X 0x%X] \t [0x%X 0x%X]\n",pos[i] % 0x100, pos[i] / 0x100, speed[i] % 0x100, speed[i] / 0x100);
-  }
+//  for(int i=0;i<13;i++){
+//    fprintf(stdout, "%d \t %d\n",pos[i],speed[i]);
+//    fprintf(stdout, "[0x%X 0x%X] \t [0x%X 0x%X]\n",pos[i] % 0x100, pos[i] / 0x100, speed[i] % 0x100, speed[i] / 0x100);
+//  }
   unsigned char outbuf[8*((5+1)*13+4 + 8)] =
  //fill, fill, ALL , (L+1)*N+4 ,  command type  , write to (lowest),  L = length,
   {0XFF, 0XFF, 0xFE, (4+1)*13+4, INST_SYNC_WRITE, P_GOAL_POSITION_L, 0x04,
@@ -191,8 +191,8 @@ DynamixelComm::SyncState(int * pos, int * speed)
    11, pos[11] % 0x100, pos[11] / 0x100, speed[11] % 0x100, speed[11] / 0x100,
    12, pos[12] % 0x100, pos[12] / 0x100, speed[12] % 0x100, speed[12] / 0x100};
 
-  for(int i=0;i<2+(4+1)*13+4;i++)
-    fprintf(stdout, " 0x%X ",outbuf[i]);
+//  for(int i=0;i<2+(4+1)*13+4;i++)
+//    fprintf(stdout, " 0x%X ",outbuf[i]);
 
   unsigned char inbuf[32*8*13];
   Send(outbuf);
@@ -222,7 +222,7 @@ DynamixelComm::SetPosition(int id, int pos)
   unsigned char inbuf[256];
 
   Send(outbuf);
-      Receive(inbuf);
+//      Receive(inbuf);
 
   return 1;
 }

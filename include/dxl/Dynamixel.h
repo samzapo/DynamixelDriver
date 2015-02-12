@@ -9,22 +9,22 @@
 namespace DXL{
 const int
     // Body Sagittal Flexion
-    BODY_JOINT = 0,
     // Hip Coronal Flexion
-    LF_HIP_AA = 1,
-    RF_HIP_AA = 2,
-    LH_HIP_AA = 3,
-    RH_HIP_AA = 4,
+BODY_JOINT = 0,
+    LF_X_1 = 1,
+    RF_X_1 = 2,
+    LH_X_1 = 3,
+    RH_X_1 = 4,
     // Hip Sagittal Flexion
-    LF_HIP_FE = 5,
-    RF_HIP_FE = 6,
-    LH_HIP_FE = 7,
-    RH_HIP_FE = 8,
+    LF_Y_2 = 5,
+    RF_Y_2 = 6,
+    LH_Y_2 = 7,
+    RH_Y_2 = 8,
     // LEG Sagittal Flexion
-    LF_LEG_FE = 9,
-    RF_LEG_FE = 10,
-    LH_LEG_FE = 11,
-    RH_LEG_FE = 12,
+    LF_Y_3 = 9,
+    RF_Y_3 = 10,
+    LH_Y_3 = 11,
+    RH_Y_3 = 12,
     // Num int
     N_JOINTS = 13;
 
@@ -47,28 +47,29 @@ inline double sign( double x ){
 
 class Dynamixel{
 public:
-  static void set_state(const double* q,const double* qd);
-  static void get_state(  double * q, double * qd, double * u);
-  static void set_position(const double* q);
-  static void set_velocity(const double* qd);
-  static void set_torque(const double* t);
-  static void set_joint_limits(const double* cw_lower,const double* ccw_upper);
-  static void relaxed(bool torque_off);
+  Dynamixel(){}
+  Dynamixel(const char * device_name, unsigned long baud_rate = 1000000);
+   void set_state(const double* q,const double* qd);
+   void get_state(  double * q, double * qd, double * u);
+   void set_position(const double* q);
+   void set_velocity(const double* qd);
+   void set_torque(const double* t);
+   void set_joint_limits(const double* cw_lower,const double* ccw_upper);
+   void relaxed(bool torque_off);
   static std::string JointName(int j){
     switch(j){
-    case BODY_JOINT: return "BODY_JOINT";
-    case LF_HIP_AA:return "LF_HIP_AA";
-    case RF_HIP_AA:return "RF_HIP_AA";
-    case LH_HIP_AA:return "LH_HIP_AA";
-    case RH_HIP_AA:return "RH_HIP_AA";
-    case LF_HIP_FE:return "LF_HIP_FE";
-    case RF_HIP_FE:return "RF_HIP_FE";
-    case LH_HIP_FE:return "LH_HIP_FE";
-    case RH_HIP_FE:return "RH_HIP_FE";
-    case LF_LEG_FE:return "LF_LEG_FE";
-    case RF_LEG_FE:return "RF_LEG_FE";
-    case LH_LEG_FE:return "LH_LEG_FE";
-    case RH_LEG_FE:return "RH_LEG_FE";
+    case LF_X_1:return "0LF_X_1";
+    case RF_X_1:return "0RF_X_1";
+    case LH_X_1:return "0LH_X_1";
+    case RH_X_1:return "0RH_X_1";
+    case LF_Y_2:return "0LF_Y_2";
+    case RF_Y_2:return "0RF_Y_2";
+    case LH_Y_2:return "0LH_Y_2";
+    case RH_Y_2:return "0RH_Y_2";
+    case LF_Y_3:return "0LF_Y_3";
+    case RF_Y_3:return "0RF_Y_3";
+    case LH_Y_3:return "0LH_Y_3";
+    case RH_Y_3:return "0RH_Y_3";
     default: return "Unknown Joint";
     }
   }
