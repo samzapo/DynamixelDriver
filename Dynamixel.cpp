@@ -2,18 +2,6 @@
 #include <dxl/DynamixelComm.h>
 #include <iomanip>      // std::setprecision
 
-#define MX_64R_MAXTORQUE 6.0
-#define RX_24F_MAXTORQUE 2.6
-
-#define MX_64R_MAXUNIT 4094 //4095
-#define RX_24F_MAXUNIT 1023 //1024
-
-// Position values
-#define MX_64R_UNIT2RAD 0.00153588974
-#define RX_24F_UNIT2RAD 0.00506145483
-#define MX_64R_RAD2UNIT 651.088404302
-#define RX_24F_RAD2UNIT 197.571653524
-
 // Speed Values
 // NOTE: moving speed to Goal Position:
 // sign(q - q_des);
@@ -22,46 +10,37 @@
 #define MX_64R_RPS2SPEED 86.0296990669
 #define RX_24F_RPS2SPEED 83.7657596178
 
-#ifdef __APPLE__
-# define DEVICE_NAME "/dev/tty.usbserial-A9YL9ZZV"
-#elif __arm__
-# define DEVICE_NAME "/dev/ttyUSB0"
-#endif
 using namespace DXL;
 const double RX_CENTER               = 512;
 const double MX_CENTER               = 2047;
-const double zeros[N_JOINTS]         = {0,  0,0,0,0,  0,0,0,0,  0,0,0,0};
-const int izeros[N_JOINTS]         = {0,  0,0,0,0,  0,0,0,0,  0,0,0,0};
-const int    q_tare[N_JOINTS]        = {RX_CENTER,  RX_CENTER,RX_CENTER,RX_CENTER,RX_CENTER,  RX_CENTER,RX_CENTER,MX_CENTER-40,MX_CENTER-250, RX_CENTER,RX_CENTER,RX_CENTER,RX_CENTER};
-const int    q_offset[N_JOINTS]      = {0,   0,0,0,0,  M_PI/4 * RX_24F_RAD2UNIT,-M_PI/4 * RX_24F_RAD2UNIT,-MX_CENTER/4,MX_CENTER/4, M_PI/2 * RX_24F_RAD2UNIT,-M_PI/2 * RX_24F_RAD2UNIT,-M_PI/2 * RX_24F_RAD2UNIT,M_PI/2 * RX_24F_RAD2UNIT};
-const double q_max[N_JOINTS]         = {RX_24F_MAXUNIT,  RX_24F_MAXUNIT,RX_24F_MAXUNIT,RX_24F_MAXUNIT,RX_24F_MAXUNIT,   RX_24F_MAXUNIT,RX_24F_MAXUNIT,MX_64R_MAXUNIT,MX_64R_MAXUNIT,   RX_24F_MAXUNIT,RX_24F_MAXUNIT,RX_24F_MAXUNIT,RX_24F_MAXUNIT};
-const double q_init[N_JOINTS]        = {M_PI/6,  M_PI/6,M_PI/6,M_PI/6,M_PI/6,  M_PI/6,M_PI/6,0,0,M_PI/6,M_PI/6,M_PI/6,M_PI/6};
-
-const int
-    RX_24F = 0,
-    MX_64R = 1;
-
-const int stype[N_JOINTS] = {RX_24F,RX_24F,RX_24F,RX_24F,RX_24F,RX_24F,RX_24F,MX_64R,MX_64R,RX_24F,RX_24F,RX_24F,RX_24F};
 
 const int ALL_SERVOS = 0xFE;
-
 static DynamixelComm* dxl_;
+
+int Dynamixel::maxUnit(int id){
+  return ((stype[id] == MX_64R)? MX_64R_MAXUNIT : RX_24F_MAXUNIT);
+}
+
+int Dynamixel::centerUnit(int id){
+ return ((stype[id] == MX_64R)? MX_CENTER : RX_CENTER);
+}
+
 
 /// rad 2 int
  int Dynamixel::convert_position(int i,double q){
   // convert from radians to integer units
   int q_val = q * ((stype[i] == MX_64R)? MX_64R_RAD2UNIT : RX_24F_RAD2UNIT);
   // center at robot 0 position
-  q_val += (q_tare[i] - q_offset[i]);
+  q_val += (centerUnit(i) - tare[i]);
   // clamp to min and max values
-  if(q_val > q_max[i]) q = q_max[i];
+  if(q_val > maxUnit(i)) q = maxUnit(i);
   else if(q_val < 0) q = 0;
   return q_val;
 }
 
 /// int 2 rad
  double Dynamixel::convert_position(int i,int q){
-  q -= (q_tare[i] - q_offset[i]);
+  q -= (centerUnit(i) - tare[i]);
   // convert from integer units to radians
   return double((q) * ((stype[i] == MX_64R)? MX_64R_UNIT2RAD : RX_24F_UNIT2RAD));
 }
@@ -78,34 +57,8 @@ static DynamixelComm* dxl_;
 
 Dynamixel::Dynamixel(const char * device_name, unsigned long baud_rate){
   dxl_ = new DynamixelComm(device_name,baud_rate);
-  dxl_->SetReturnLevel(ALL_SERVOS,1);      // Return only for the READ command
-  dxl_->EnableTorque(ALL_SERVOS, 1);
-
-//  for(int i=0;i<N_JOINTS;i++){
-//    dxl_->SetPositionClamp(i,0,q_max[i]);
-//    dxl_->SetSpeed(i,0);
-//    speed[i] = 0;
-//  }
-
-//  double t = 0;
-//  while(1){
-//    t += 0.001;
-////    std::cout  << sin(t) << std::endl;
-
-//    int pos[N_JOINTS];
-//    int i=1;
-////    for(int i=0;i<N_JOINTS;i++){
-////  //    fprintf(stdout, "Pinging: %d\n", dxl_->Ping(i));
-//      pos[i] = q_tare[i] + q_offset[i] + 100*sin(t)*0.5;
-//////      std::cout  << i << " : " << pos[i] << std::endl;
-//      dxl_->SetPosition(i,pos[i]);
-//////      fprintf(stdout, "Pinging: %d\n", dxl_->Ping(i));
-
-////    }
-//////    dxl_->Flush();
-////    dxl_->SyncState((int*)pos,(int*)speed);
-//    sleep(0.1);
-//  }
+//  dxl_->SetReturnLevel(ALL_SERVOS,1);      // Return only for the READ command
+//  dxl_->EnableTorque(ALL_SERVOS, 1);
   std::cout << "Robot was inited from Dynamixels at: " << device_name << std::endl;
 }
 
@@ -114,9 +67,9 @@ void Dynamixel::relaxed(bool torque_off){
 }
 
 /// set velocity (to goal pos)
-void Dynamixel::set_velocity(const double qd[N_JOINTS]){
+void Dynamixel::set_velocity(const std::vector<double> qd){
   static int valqd;
-  for(int i=BODY_JOINT;i<N_JOINTS;i++){
+  for(int i=0;i<ids.size();i++){
     valqd = (stype[i] == MX_64R)? qd[i]*MX_64R_RPS2SPEED : /* else RX-24F */ qd[i]*RX_24F_RPS2SPEED;
     dxl_->SetTorque(i,1023);
     dxl_->SetSpeed(i,valqd);
@@ -124,48 +77,47 @@ void Dynamixel::set_velocity(const double qd[N_JOINTS]){
 }
 
 /// set goal pose
-void Dynamixel::set_position(const double * q){
-  int qi[N_JOINTS];
-  for(int i=BODY_JOINT;i<N_JOINTS;i++){
+void Dynamixel::set_position(const std::vector<double> q){
+  std::vector<int> qi(ids.size()), qid(ids.size());;
+  for(int i=0;i<ids.size();i++){
     qi[i] = convert_position(i,q[i]);
+    qid[i] = 0;
   }
-  int speed[N_JOINTS] = {100,  100,100,100,100,  100,100,100,100,  100,100,100,100};
-
-  dxl_->SyncState((int*)qi,(int*)speed);
+  dxl_->SyncState(ids,qi,qid);
 }
 
-void Dynamixel::set_state(const double * q,const double * qd){
-  int qi[N_JOINTS], qid[N_JOINTS];
-  for(int i=BODY_JOINT;i<N_JOINTS;i++){
+void Dynamixel::set_state(const std::vector<double> q,const std::vector<double> qd){
+  std::vector<int> qi(ids.size()), qid(ids.size());
+  for(int i=0;i<ids.size();i++){
     qi[i] = convert_position(i,q[i]);
     qid[i] = convert_velocity(i,qd[i]);
   }
 
-  dxl_->SyncState(qi,qid);
+  dxl_->SyncState(ids,qi,qid);
 }
 
-void Dynamixel::set_joint_limits(const double* cw_lower,const double* ccw_upper){
-  for(int i=BODY_JOINT;i<N_JOINTS;i++)
+void Dynamixel::set_joint_limits(const std::vector<double> cw_lower,const std::vector<double> ccw_upper){
+  for(int i=0;i<ids.size();i++)
     dxl_->SetPositionClamp(i,convert_position(i,cw_lower[i]),convert_position(i,ccw_upper[i]));
 }
 
-void Dynamixel::get_state( double * q, double * qd, double * u){
-  int qi[N_JOINTS], qid[N_JOINTS], ui[N_JOINTS];
+void Dynamixel::get_state( std::vector<double> q, std::vector<double> qd, std::vector<double> u){
+  std::vector<int> qi(ids.size()), qid(ids.size()), ui(ids.size());
   dxl_->GetPosition(ALL_SERVOS,qi);
   dxl_->GetSpeed(ALL_SERVOS,qid);
   dxl_->GetLoad(ALL_SERVOS,ui);
-  for(int i=BODY_JOINT;i<N_JOINTS;i++){
+  for(int i=0;i<ids.size();i++){
     q[i] = convert_position(i,qi[i]);
     qd[i] = convert_velocity(i,qid[i]);
     u[i] = ui[i];
   }
 }
 
-// note, this calls N_JOINTS services (very slow)
+// note, this calls ids.size() services (very slow)
 /*
 void Dynamixel::get_robot_state(){
-    unsigned char * buffer[N_JOINTS];
-    for(int i=BODY_JOINT;i<N_JOINTS;i++){
+    unsigned char * buffer[ids.size()];
+    for(int i=0;i<ids.size();i++){
         ReadAllData(i,buffer[i]);
         for(int i=ID;i<N_OPTIONS;i++)
             std::string translateValue(buffer[i]);
@@ -259,9 +211,9 @@ std::string translateValue(unsigned int value atAddress, unsigned int address)
 
 
 
-void Dynamixel::set_torque(const double* t){
+void Dynamixel::set_torque(const std::vector<double> t){
   static int valt,valq;
-  for(int i=BODY_JOINT;i<N_JOINTS;i++){
+  for(int i=0;i<ids.size();i++){
     valt = (stype[i] == MX_64R)? (fabs(t[i])/MX_64R_MAXTORQUE)*1023 : (fabs(t[i])/RX_24F_MAXTORQUE)*1023;
     if(valt > 1023) valt = 1023;
     valq = (t[i]>=0)? ((stype[i] == MX_64R)? MX_64R_MAXUNIT:RX_24F_MAXUNIT) : 0;
@@ -270,20 +222,72 @@ void Dynamixel::set_torque(const double* t){
   }
 }
 
+# define DEVICE_NAME "/dev/tty.usbserial-A9YL9ZZV"
+
 #include <Ravelin/VectorNd.h>
 int main(int argc,char* argv[]){
   Dynamixel dxl(DEVICE_NAME);
+
+  // LINKS robot
+  dxl.tare.push_back(0);
+  dxl.tare.push_back(0);
+  dxl.tare.push_back(0);
+  dxl.tare.push_back(0);
+
+  dxl.tare.push_back(M_PI/4 * RX_24F_RAD2UNIT);
+  dxl.tare.push_back(-M_PI/4 * RX_24F_RAD2UNIT);
+  dxl.tare.push_back(-M_PI/4 * MX_64R_RAD2UNIT+40);
+  dxl.tare.push_back(M_PI/4 * MX_64R_RAD2UNIT+250);
+
+  dxl.tare.push_back(M_PI/2 * RX_24F_RAD2UNIT);
+  dxl.tare.push_back(-M_PI/2 * RX_24F_RAD2UNIT);
+  dxl.tare.push_back(-M_PI/2 * RX_24F_RAD2UNIT);
+  dxl.tare.push_back(M_PI/2 * RX_24F_RAD2UNIT);
+
+  dxl.stype.push_back(Dynamixel::RX_24F);
+  dxl.stype.push_back(Dynamixel::RX_24F);
+  dxl.stype.push_back(Dynamixel::RX_24F);
+  dxl.stype.push_back(Dynamixel::RX_24F);
+
+  dxl.stype.push_back(Dynamixel::RX_24F);
+  dxl.stype.push_back(Dynamixel::RX_24F);
+  dxl.stype.push_back(Dynamixel::MX_64R);
+  dxl.stype.push_back(Dynamixel::MX_64R);
+
+  dxl.stype.push_back(Dynamixel::RX_24F);
+  dxl.stype.push_back(Dynamixel::RX_24F);
+  dxl.stype.push_back(Dynamixel::RX_24F);
+  dxl.stype.push_back(Dynamixel::RX_24F);
+
+
+  dxl.names.push_back("0LF_X_1");
+  dxl.names.push_back("0RF_X_1");
+  dxl.names.push_back("0LH_X_1");
+  dxl.names.push_back("0RH_X_1");
+
+  dxl.names.push_back("0LF_Y_2");
+  dxl.names.push_back("0RF_Y_2");
+  dxl.names.push_back("0LH_Y_2");
+  dxl.names.push_back("0RH_Y_2");
+
+  dxl.names.push_back("0LF_Y_3");
+  dxl.names.push_back("0RF_Y_3");
+  dxl.names.push_back("0LH_Y_3");
+  dxl.names.push_back("0RH_Y_3");
+
+  for(int i=1;i<=dxl.names.size();i++){
+    dxl.ids.push_back(i);
+  }
 
   double t = 0;
   while(1){
     t += 0.001;
 //    std::cout  << sin(t) << std::endl;
 
-    Ravelin::VectorNd zero(N_JOINTS);
+    Ravelin::VectorNd zero(dxl.ids.size());
     zero.set_zero();
-    for(int i=0;i<N_JOINTS;i++)
-//      zero[i] = sin(t)*M_PI/16.0;
-      dxl.set_position(zero.data());
+    for(int i=0;i<dxl.ids.size();i++)
+      dxl.set_position(std::vector<double>(zero.begin(),zero.end()));
   }
   return 0;
 }

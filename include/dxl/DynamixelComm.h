@@ -28,6 +28,8 @@
 
 #include <cstdlib>
 #include <cstdio>
+#include <sstream>
+#include <vector>
 
 class SerialException
 {
@@ -147,19 +149,16 @@ public:
     int             Receive(unsigned char * b);
     bool            ReadAllData(int id, unsigned char * buffer);
     int             Move(int id, int pos, int speed);
-    int             SyncState(int * pos, int * speed);
+    int             SyncState(std::vector<int> id,std::vector<int> pos, std::vector<int> speed);
     int             SetState(int id, int pos, int speed);
     int             SetSpeed(int id, int speed);
     int             SetPosition(int id, int pos);
     int             EnableTorque(int id, int value);
     int             SetLED(int id, int value);
-//    int             GetPosition(int id);
-//    int             GetSpeed(int id);
-//    int             GetLoad(int id);
     bool            Ping(int id);
-    void            GetPosition(int id, int * q);
-    void            GetSpeed(int id, int * qd);
-    void            GetLoad(int id, int * u);
+    void            GetPosition(int id, std::vector<int> q);
+    void            GetSpeed(int id, std::vector<int> qd);
+    void            GetLoad(int id, std::vector<int> u);
     int             SetBaudRate(int id, int br);
     int             ResetBaudRate(int id);
     int             SetReturnLevel(int id, int rl);

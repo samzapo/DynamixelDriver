@@ -25,6 +25,8 @@
 // THIS IS THE NEW COMM
 
 #include <dxl/DynamixelComm.h>
+#include <stdio.h>
+#include <iostream>
 
 DynamixelComm::DynamixelComm(const char * serial_device, unsigned long baud_rate):
   Serial(serial_device, baud_rate)
@@ -166,37 +168,34 @@ DynamixelComm::SetState(int id, int pos, int speed)
 }
 
 int
-DynamixelComm::SyncState(int * pos, int * speed)
+DynamixelComm::SyncState(std::vector<int> id, std::vector<int> pos, std::vector<int> speed)
 {
-//INST_SYNC_WRITE
-//  for(int i=0;i<13;i++){
-//    fprintf(stdout, "%d \t %d\n",pos[i],speed[i]);
-//    fprintf(stdout, "[0x%X 0x%X] \t [0x%X 0x%X]\n",pos[i] % 0x100, pos[i] / 0x100, speed[i] % 0x100, speed[i] / 0x100);
-//  }
-  unsigned char outbuf[8*((5+1)*13+4 + 8)] =
- //fill, fill, ALL , (L+1)*N+4 ,  command type  , write to (lowest),  L = length,
-  {0XFF, 0XFF, 0xFE, (4+1)*13+4, INST_SYNC_WRITE, P_GOAL_POSITION_L, 0x04,
-  //ID, pos_L            POS_H            VEL_L              VEL_H
-  100, pos[0 ] % 0x100, pos[0 ] / 0x100, speed[0 ] % 0x100, speed[0 ] / 0x100,
-    1, pos[1 ] % 0x100, pos[1 ] / 0x100, speed[1 ] % 0x100, speed[1 ] / 0x100,
-    2, pos[2 ] % 0x100, pos[2 ] / 0x100, speed[2 ] % 0x100, speed[2 ] / 0x100,
-    3, pos[3 ] % 0x100, pos[3 ] / 0x100, speed[3 ] % 0x100, speed[3 ] / 0x100,
-    4, pos[4 ] % 0x100, pos[4 ] / 0x100, speed[4 ] % 0x100, speed[4 ] / 0x100,
-    5, pos[5 ] % 0x100, pos[5 ] / 0x100, speed[5 ] % 0x100, speed[5 ] / 0x100,
-    6, pos[6 ] % 0x100, pos[6 ] / 0x100, speed[6 ] % 0x100, speed[6 ] / 0x100,
-    7, pos[7 ] % 0x100, pos[7 ] / 0x100, speed[7 ] % 0x100, speed[7 ] / 0x100,
-    8, pos[8 ] % 0x100, pos[8 ] / 0x100, speed[8 ] % 0x100, speed[8 ] / 0x100,
-    9, pos[9 ] % 0x100, pos[9 ] / 0x100, speed[9 ] % 0x100, speed[9 ] / 0x100,
-   10, pos[10] % 0x100, pos[10] / 0x100, speed[10] % 0x100, speed[10] / 0x100,
-   11, pos[11] % 0x100, pos[11] / 0x100, speed[11] % 0x100, speed[11] / 0x100,
-   12, pos[12] % 0x100, pos[12] / 0x100, speed[12] % 0x100, speed[12] / 0x100};
 
-//  for(int i=0;i<2+(4+1)*13+4;i++)
-//    fprintf(stdout, " 0x%X ",outbuf[i]);
+  std::stringstream ss;
+  unsigned char fill = 0xFF;
+  unsigned char ALL = 0xFE;
+  unsigned char size_output = (4+1)*id.size()+4;
+  unsigned char length = 0x04;
+  unsigned char sync_w = INST_SYNC_WRITE;
+  unsigned char goal_pos = P_GOAL_POSITION_L;
 
-  unsigned char inbuf[32*8*13];
-  Send(outbuf);
-//      Receive(inbuf);
+  //fill, fill, ALL , (L+1)*N+4 ,  command type  , write to (lowest),  L = length,
+  ss << fill << fill << ALL << size_output << sync_w << goal_pos << length;
+  for(int i=0;i<id.size();i++){
+    unsigned char i1 = id[i] % 0x100;
+    unsigned char p1 = pos[i] % 0x100;
+    unsigned char p2 = pos[i] / 0x100;
+    unsigned char s1 = speed[i] % 0x100;
+    unsigned char s2 = speed[i] / 0x100;
+
+    //ID, pos_L POS_H VEL_L VEL_H
+    ss << i1 << p1 << p2 << s1 << s2;
+  }
+  const char* s = ss.str().c_str();
+//  for(int i=0;i<ss.str().size();i++)
+//    fprintf(stdout," 0x%X",(const unsigned char)s[i]);
+  unsigned char* output = (unsigned char*) s;
+  Send(output);
 
   return 1;
 }
@@ -243,26 +242,26 @@ DynamixelComm::EnableTorque(int id, int value)
   }
 
   {
-    int val = 0x20;//0x200;//0x20; //0x3FF
+    int val = 0x0;
     unsigned char outbuf[256] = {0XFF, 0XFF, id, 5, INST_WRITE, P_PUNCH_L, val % 256, val / 256, 0x00}; // write two bytes for present position
     Send(outbuf);
   }
 
 
   {
-    unsigned char outbuf[256] = {0XFF, 0XFF, id, 4, INST_WRITE, P_CW_COMPLIANCE_MARGIN, 0x04, 0X00}; // write two bytes for present position
+    unsigned char outbuf[256] = {0XFF, 0XFF, id, 4, INST_WRITE, P_CW_COMPLIANCE_MARGIN, 0, 0X00}; // write two bytes for present position
     Send(outbuf);
   }
   {
-    unsigned char outbuf[256] = {0XFF, 0XFF, id, 4, INST_WRITE, P_CCW_COMPLIANCE_MARGIN, 0x04, 0X00}; // write two bytes for present position
+    unsigned char outbuf[256] = {0XFF, 0XFF, id, 4, INST_WRITE, P_CCW_COMPLIANCE_MARGIN, 0, 0X00}; // write two bytes for present position
     Send(outbuf);
   }
   {
-    unsigned char outbuf[256] = {0XFF, 0XFF, id, 4, INST_WRITE, P_CW_COMPLIANCE_SLOPE, 0x20, 0X00}; // write two bytes for present position
+    unsigned char outbuf[256] = {0XFF, 0XFF, id, 4, INST_WRITE, P_CW_COMPLIANCE_SLOPE, 32, 0X00}; // write two bytes for present position
     Send(outbuf);
   }
   {
-    unsigned char outbuf[256] = {0XFF, 0XFF, id, 4, INST_WRITE, P_CCW_COMPLIANCE_SLOPE, 0x20, 0X00}; // write two bytes for present position
+    unsigned char outbuf[256] = {0XFF, 0XFF, id, 4, INST_WRITE, P_CCW_COMPLIANCE_SLOPE, 32, 0X00}; // write two bytes for present position
     Send(outbuf);
   }
 
@@ -283,7 +282,7 @@ DynamixelComm::SetLED(int id, int value)
   return 1;
 }
 
-void DynamixelComm::GetPosition(int id, int q[13])
+void DynamixelComm::GetPosition(int id, std::vector<int> q)
 {
   unsigned char outbuf[256] = {0XFF, 0XFF, id, 4, INST_READ, P_PRESENT_POSITION_L, 2, 0X00}; // read two bytes for present position
   unsigned char inbuf[256];
@@ -308,7 +307,7 @@ void DynamixelComm::GetPosition(int id, int q[13])
 
 }
 
-void DynamixelComm::GetSpeed(int id, int q[13])
+void DynamixelComm::GetSpeed(int id, std::vector<int> q)
 {
   unsigned char outbuf[256] = {0XFF, 0XFF, id, 4, INST_READ, P_PRESENT_SPEED_L, 2, 0X00}; // read two bytes for present position
   unsigned char inbuf[256];
@@ -334,7 +333,7 @@ void DynamixelComm::GetSpeed(int id, int q[13])
 }
 
 
-void DynamixelComm::GetLoad(int id, int q[13])
+void DynamixelComm::GetLoad(int id, std::vector<int> q)
 {
   unsigned char outbuf[256] = {0XFF, 0XFF, id, 4, INST_READ, P_PRESENT_LOAD_L, 2, 0X00}; // read two bytes for present position
   unsigned char inbuf[256];
@@ -518,7 +517,7 @@ DynamixelComm::Ping(int id)
 
 #define USE_SOCKET
 #define IKAROSPATH	"../"
-#define MAX_FAILED_READS 1
+#define MAX_FAILED_READS 10
 
 #ifdef __APPLE__
 # include <IOKit/serial/ioss.h>
@@ -528,15 +527,10 @@ DynamixelComm::Ping(int id)
 # include <errno.h>
 # include <wiringSerial.h> // this is the IOSerialStream for RPi
 # include <termio.h>
-# include <linux/serial.h>
-# include <sys/types.h>
-# include <sys/stat.h>
-# include <sys/ioctl.h> // from mac
 # include <fcntl.h>
 # include <termios.h>
-# include <unistd.h>     //added for read() write()
+//# include <unistd.h>     //added for read() write()
 #endif
-
 
 
 
@@ -545,19 +539,29 @@ DynamixelComm::Ping(int id)
 Serial::Serial(const char * device_name, unsigned long baud_rate)
 {
   struct termios options;
-
+  std::cout << ">> starting Serial::Serial(.)" << std::endl;
   fd = open(device_name, O_RDWR | O_NOCTTY | O_NDELAY);
   if(fd == -1)
     throw SerialException("Could not open serial device.\n", errno);
+  std::cout << " -- serial device is open, fd: " << fd << std::endl;
 
   fcntl(fd, F_SETFL, 0); // blocking
+  std::cout << " -- blocking" << std::endl;
   tcgetattr(fd, &options); // get the current options // TODO: restore on destruction of the object
+  std::cout << " -- got the current options" << std::endl;
+
+  tcgetattr(fd, &options);
+  options.c_cflag=B57600;
+  tcsetattr(fd, TCSANOW, &options);
+  std::cout << " -- set baud rate uart0_filestream" << std::endl;
 
 #ifndef __APPLE__
-  if(cfsetispeed(&options, baud_rate))
+  if(cfsetispeed(&options, B57600) != 0)
     throw SerialException("Could not set baud rate for input", errno);
-  if(cfsetospeed(&options, baud_rate))
+  std::cout << " -- set baud rate for input" << std::endl;
+  if(cfsetospeed(&options, B57600) != 0)
     throw SerialException("Could not set baud rate for output", errno);
+  std::cout << " -- set baud rate for output" << std::endl;
 #endif
 
   options.c_cflag |= (CS8 | CLOCAL | CREAD);
@@ -576,6 +580,7 @@ Serial::Serial(const char * device_name, unsigned long baud_rate)
   int ret = ioctl(fd, IOSSIOSPEED, &TGTBAUD); // sets also non-standard baud rates
   if (ret)
     throw SerialException("Could not set baud rate", errno);
+  std::cout << " -- set baud rate for output" << std::endl;
 #endif
 }
 

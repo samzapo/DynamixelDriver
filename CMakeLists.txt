@@ -9,25 +9,30 @@ INCLUDE_DIRECTORIES(
   include
 )
 
-link_directories()
+link_directories(/usr/local/lib /usr/lib .)
 
-ADD_EXECUTABLE(${PROJECT_NAME}_test
-  DynamixelComm.cpp
-  Dynamixel.cpp
-)
-ADD_LIBRARY(${PROJECT_NAME}
- DynamixelComm.cpp
+# build libraries
+ADD_LIBRARY(dxl
  Dynamixel.cpp
-  )
+ DynamixelComm.cpp
+)
 
 target_link_libraries(
-  ${PROJECT_NAME} Ravelin
+  dxl Ravelin
 )
-target_link_libraries(
-  ${PROJECT_NAME}_test Ravelin
-)
+
 
 set(CMAKE_INSTALL_PREFIX /usr/local)
 set(INSTALL_LIB_DIR lib CACHE PATH "Installation directory for libraries")
-install (TARGETS ${PROJECT_NAME} DESTINATION lib)
+install (TARGETS dxl DESTINATION lib)
 install (DIRECTORY ${CMAKE_SOURCE_DIR}/include/dxl DESTINATION include)
+
+# build test
+ADD_EXECUTABLE(dxl_test
+ Dynamixel.cpp
+ DynamixelComm.cpp
+)
+target_link_libraries(
+  dxl_test Ravelin
+)
+
