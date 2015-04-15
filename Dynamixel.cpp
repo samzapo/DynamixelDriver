@@ -226,7 +226,7 @@ void Dynamixel::set_torque(const std::vector<double> t){
 
 #include <Ravelin/VectorNd.h>
 int main(int argc,char* argv[]){
-  Dynamixel dxl(DEVICE_NAME);
+  Dynamixel dxl(argv[1]);
 
   // LINKS robot
   dxl.tare.push_back(0);
