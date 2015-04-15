@@ -522,14 +522,13 @@ DynamixelComm::Ping(int id)
 #ifdef __APPLE__
 # include <IOKit/serial/ioss.h>
 # include <sys/ioctl.h>
-#elif __arm__
+#else //elif __arm__
 # include <stdlib.h>
 # include <errno.h>
-# include <wiringSerial.h> // this is the IOSerialStream for RPi
 # include <termio.h>
 # include <fcntl.h>
 # include <termios.h>
-//# include <unistd.h>     //added for read() write()
+# include <unistd.h>     //added for read() write()
 #endif
 
 
@@ -555,14 +554,14 @@ Serial::Serial(const char * device_name, unsigned long baud_rate)
   tcsetattr(fd, TCSANOW, &options);
   std::cout << " -- set baud rate uart0_filestream" << std::endl;
 
-#ifndef __APPLE__
-  if(cfsetispeed(&options, B57600) != 0)
+//#ifndef __APPLE__
+  if(cfsetispeed(&options, B1000000) != 0)
     throw SerialException("Could not set baud rate for input", errno);
   std::cout << " -- set baud rate for input" << std::endl;
-  if(cfsetospeed(&options, B57600) != 0)
+  if(cfsetospeed(&options, B1000000) != 0)
     throw SerialException("Could not set baud rate for output", errno);
   std::cout << " -- set baud rate for output" << std::endl;
-#endif
+//#endif
 
   options.c_cflag |= (CS8 | CLOCAL | CREAD);
   options.c_iflag = IGNPAR;

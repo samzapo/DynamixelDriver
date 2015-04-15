@@ -21,10 +21,13 @@ target_link_libraries(
   dxl Ravelin
 )
 
+# fix the C++ linking error on 64-bit Linux
+set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl")
 
 set(CMAKE_INSTALL_PREFIX /usr/local)
 set(INSTALL_LIB_DIR lib CACHE PATH "Installation directory for libraries")
-install (TARGETS dxl DESTINATION lib)
+set_target_properties(dxl PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+install(TARGETS dxl DESTINATION lib)
 install (DIRECTORY ${CMAKE_SOURCE_DIR}/include/dxl DESTINATION include)
 
 # build test
