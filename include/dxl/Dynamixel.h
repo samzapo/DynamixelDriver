@@ -48,7 +48,7 @@ public:
   };
   std::vector<int> ids;
   std::vector<std::string> names;
-  std::vector<double> tare;
+  std::vector<int> tare;
   std::vector<Type> stype;
 
   int maxUnit(int id);

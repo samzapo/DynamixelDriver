@@ -676,9 +676,10 @@ Serial::SendBytes(const char *sendbuf, int length)
 
   int n = write(fd, sendbuf, length);
 
-  if(n == -1)
+  if(n == -1){
     printf("Could not send bytes", errno);
-
+    throw std::runtime_error("Could not send bytes");
+  }
   return n;
 }
 

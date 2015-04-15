@@ -57,8 +57,9 @@ int Dynamixel::centerUnit(int id){
 
 Dynamixel::Dynamixel(const char * device_name, unsigned long baud_rate){
   dxl_ = new DynamixelComm(device_name,baud_rate);
-//  dxl_->SetReturnLevel(ALL_SERVOS,1);      // Return only for the READ command
-//  dxl_->EnableTorque(ALL_SERVOS, 1);
+  dxl_->SetReturnLevel(ALL_SERVOS,1);      // Return only for the READ command
+  dxl_->EnableTorque(ALL_SERVOS, 1);
+  
   std::cout << "Robot was inited from Dynamixels at: " << device_name << std::endl;
 }
 
@@ -260,23 +261,27 @@ int main(int argc,char* argv[]){
   dxl.stype.push_back(Dynamixel::RX_24F);
 
 
-  dxl.names.push_back("0LF_X_1");
-  dxl.names.push_back("0RF_X_1");
-  dxl.names.push_back("0LH_X_1");
-  dxl.names.push_back("0RH_X_1");
+  dxl.names.push_back("LF_X_1");
+  dxl.names.push_back("RF_X_1");
+  dxl.names.push_back("LH_X_1");
+  dxl.names.push_back("RH_X_1");
 
-  dxl.names.push_back("0LF_Y_2");
-  dxl.names.push_back("0RF_Y_2");
-  dxl.names.push_back("0LH_Y_2");
-  dxl.names.push_back("0RH_Y_2");
+  dxl.names.push_back("LF_Y_2");
+  dxl.names.push_back("RF_Y_2");
+  dxl.names.push_back("LH_Y_2");
+  dxl.names.push_back("RH_Y_2");
 
-  dxl.names.push_back("0LF_Y_3");
-  dxl.names.push_back("0RF_Y_3");
-  dxl.names.push_back("0LH_Y_3");
-  dxl.names.push_back("0RH_Y_3");
+  dxl.names.push_back("LF_Y_3");
+  dxl.names.push_back("RF_Y_3");
+  dxl.names.push_back("LH_Y_3");
+  dxl.names.push_back("RH_Y_3");
 
   for(int i=1;i<=dxl.names.size();i++){
     dxl.ids.push_back(i);
+  }
+  
+  for(int i=1;i<=dxl.names.size();i++){
+    dxl_->SetTorque(0x3FF,i);
   }
 
   double t = 0;
