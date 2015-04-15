@@ -522,14 +522,13 @@ DynamixelComm::Ping(int id)
 #ifdef __APPLE__
 # include <IOKit/serial/ioss.h>
 # include <sys/ioctl.h>
-#elif __arm__
+#else //elif __arm__
 # include <stdlib.h>
 # include <errno.h>
-# include <wiringSerial.h> // this is the IOSerialStream for RPi
 # include <termio.h>
 # include <fcntl.h>
 # include <termios.h>
-//# include <unistd.h>     //added for read() write()
+# include <unistd.h>     //added for read() write()
 #endif
 
 
