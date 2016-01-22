@@ -264,6 +264,11 @@ DynamixelComm::EnableTorque(int id, int value)
     unsigned char outbuf[256] = {0XFF, 0XFF, id, 4, INST_WRITE, P_CCW_COMPLIANCE_SLOPE, 32, 0X00}; // write two bytes for present position
     Send(outbuf);
   }
+  {
+    int val = 0x03FF;
+    unsigned char outbuf[256] = {0XFF, 0XFF, id, 5, INST_WRITE, P_MAX_TORQUE_L, val % 256, val / 256, 0x00}; // write two bytes for present position
+    Send(outbuf);
+  }
 
   return 1;
 }
@@ -554,14 +559,21 @@ Serial::Serial(const char * device_name, unsigned long baud_rate)
   tcsetattr(fd, TCSANOW, &options);
   std::cout << " -- set baud rate uart0_filestream" << std::endl;
 
-//#ifndef __APPLE__
+#ifndef __APPLE__
   if(cfsetispeed(&options, B1000000) != 0)
     throw SerialException("Could not set baud rate for input", errno);
   std::cout << " -- set baud rate for input" << std::endl;
   if(cfsetospeed(&options, B1000000) != 0)
     throw SerialException("Could not set baud rate for output", errno);
   std::cout << " -- set baud rate for output" << std::endl;
-//#endif
+#else
+  if(cfsetispeed(&options, 1000000) != 0)
+    throw SerialException("Could not set baud rate for input", errno);
+  std::cout << " -- set baud rate for input" << std::endl;
+  if(cfsetospeed(&options, 1000000) != 0)
+    throw SerialException("Could not set baud rate for output", errno);
+  std::cout << " -- set baud rate for output" << std::endl;
+#endif
 
   options.c_cflag |= (CS8 | CLOCAL | CREAD);
   options.c_iflag = IGNPAR;

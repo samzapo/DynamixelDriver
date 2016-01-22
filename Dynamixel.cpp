@@ -31,7 +31,7 @@ int Dynamixel::centerUnit(int id){
   // convert from radians to integer units
   int q_val = q * ((stype[i] == MX_64R)? MX_64R_RAD2UNIT : RX_24F_RAD2UNIT);
   // center at robot 0 position
-  q_val += (centerUnit(i) - tare[i]);
+  q_val += (centerUnit(i) + tare[i]);
   // clamp to min and max values
   if(q_val > maxUnit(i)) q = maxUnit(i);
   else if(q_val < 0) q = 0;
@@ -40,7 +40,7 @@ int Dynamixel::centerUnit(int id){
 
 /// int 2 rad
  double Dynamixel::convert_position(int i,int q){
-  q -= (centerUnit(i) - tare[i]);
+  q -= (centerUnit(i) + tare[i]);
   // convert from integer units to radians
   return double((q) * ((stype[i] == MX_64R)? MX_64R_UNIT2RAD : RX_24F_UNIT2RAD));
 }
@@ -59,7 +59,6 @@ Dynamixel::Dynamixel(const char * device_name, unsigned long baud_rate){
   dxl_ = new DynamixelComm(device_name,baud_rate);
   dxl_->SetReturnLevel(ALL_SERVOS,1);      // Return only for the READ command
   dxl_->EnableTorque(ALL_SERVOS, 1);
-  
   std::cout << "Robot was inited from Dynamixels at: " << device_name << std::endl;
 }
 
@@ -230,21 +229,21 @@ int main(int argc,char* argv[]){
   Dynamixel dxl(argv[1]);
 
   // LINKS robot
-  dxl.tare.push_back(0);
-  dxl.tare.push_back(0);
-  dxl.tare.push_back(0);
-  dxl.tare.push_back(0);
+  dxl.tare.push_back(-M_PI_2 * RX_24F_RAD2UNIT);
+  dxl.tare.push_back( M_PI_2 * RX_24F_RAD2UNIT);
+  dxl.tare.push_back(-M_PI_2 * RX_24F_RAD2UNIT);
+  dxl.tare.push_back( M_PI_2 * RX_24F_RAD2UNIT);
+  
+  dxl.tare.push_back(-M_PI_2 * RX_24F_RAD2UNIT);
+  dxl.tare.push_back( M_PI_2 * RX_24F_RAD2UNIT);
+  dxl.tare.push_back(-M_PI_2 * MX_64R_RAD2UNIT - 20 );
+  dxl.tare.push_back( M_PI_2 * MX_64R_RAD2UNIT - 270);
 
-  dxl.tare.push_back(M_PI/4 * RX_24F_RAD2UNIT);
-  dxl.tare.push_back(-M_PI/4 * RX_24F_RAD2UNIT);
-  dxl.tare.push_back(-M_PI/4 * MX_64R_RAD2UNIT+40);
-  dxl.tare.push_back(M_PI/4 * MX_64R_RAD2UNIT+250);
-
-  dxl.tare.push_back(M_PI/2 * RX_24F_RAD2UNIT);
-  dxl.tare.push_back(-M_PI/2 * RX_24F_RAD2UNIT);
-  dxl.tare.push_back(-M_PI/2 * RX_24F_RAD2UNIT);
-  dxl.tare.push_back(M_PI/2 * RX_24F_RAD2UNIT);
-
+  dxl.tare.push_back(0);
+  dxl.tare.push_back(0);
+  dxl.tare.push_back(0);
+  dxl.tare.push_back(0);
+  
   dxl.stype.push_back(Dynamixel::RX_24F);
   dxl.stype.push_back(Dynamixel::RX_24F);
   dxl.stype.push_back(Dynamixel::RX_24F);
@@ -263,36 +262,36 @@ int main(int argc,char* argv[]){
 
   dxl.names.push_back("LF_X_1");
   dxl.names.push_back("RF_X_1");
-  dxl.names.push_back("LH_X_1");
   dxl.names.push_back("RH_X_1");
+  dxl.names.push_back("LH_X_1");
 
   dxl.names.push_back("LF_Y_2");
   dxl.names.push_back("RF_Y_2");
-  dxl.names.push_back("LH_Y_2");
   dxl.names.push_back("RH_Y_2");
+  dxl.names.push_back("LH_Y_2");
 
   dxl.names.push_back("LF_Y_3");
   dxl.names.push_back("RF_Y_3");
-  dxl.names.push_back("LH_Y_3");
   dxl.names.push_back("RH_Y_3");
+  dxl.names.push_back("LH_Y_3");
 
   for(int i=1;i<=dxl.names.size();i++){
     dxl.ids.push_back(i);
   }
   
-  for(int i=1;i<=dxl.names.size();i++){
-    dxl_->SetTorque(0x3FF,i);
-  }
+  dxl_->SetTorque(0x03FF,ALL_SERVOS);
 
   double t = 0;
+  Ravelin::VectorNd velocity = Ravelin::VectorNd::zero(dxl.ids.size());
+  Ravelin::VectorNd position = Ravelin::VectorNd::zero(dxl.ids.size());
   while(1){
-    t += 0.001;
-//    std::cout  << sin(t) << std::endl;
+    t += 0.1;
 
-    Ravelin::VectorNd zero(dxl.ids.size());
-    zero.set_zero();
-    for(int i=0;i<dxl.ids.size();i++)
-      dxl.set_position(std::vector<double>(zero.begin(),zero.end()));
+    //std::fill(position.begin(),position.end(),sin(t * M_PI) * M_PI * 0.1);
+
+    std::cout  << position << std::endl;
+    dxl.set_state(std::vector<double>(position.begin(),position.end()),std::vector<double>(velocity.begin(),velocity.end()));
+    sleep(1);
   }
   return 0;
 }
