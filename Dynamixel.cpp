@@ -57,8 +57,8 @@ int Dynamixel::centerUnit(int id){
 
 Dynamixel::Dynamixel(const char * device_name, unsigned long baud_rate){
   dxl_ = new DynamixelComm(device_name,baud_rate);
-  dxl_->SetReturnLevel(ALL_SERVOS,1);      // Return only for the READ command
-  dxl_->EnableTorque(ALL_SERVOS, 1);
+  //dxl_->SetReturnLevel(ALL_SERVOS,1);      // Return only for the READ command
+  //dxl_->EnableTorque(ALL_SERVOS, 1);
   std::cout << "Robot was inited from Dynamixels at: " << device_name << std::endl;
 }
 
@@ -279,8 +279,6 @@ int main(int argc,char* argv[]){
     dxl.ids.push_back(i);
   }
   
-  dxl_->SetTorque(0x03FF,ALL_SERVOS);
-
   double t = 0;
   Ravelin::VectorNd velocity = Ravelin::VectorNd::zero(dxl.ids.size());
   Ravelin::VectorNd position = Ravelin::VectorNd::zero(dxl.ids.size());
