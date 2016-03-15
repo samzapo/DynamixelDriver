@@ -18,7 +18,7 @@ ADD_LIBRARY(dxl
 )
 
 target_link_libraries(
-  dxl Ravelin
+  dxl
 )
 
 # fix the C++ linking error on 64-bit Linux
@@ -36,6 +36,6 @@ ADD_EXECUTABLE(dxl_test
  DynamixelComm.cpp
 )
 target_link_libraries(
-  dxl_test Ravelin
+  dxl_test
 )
 

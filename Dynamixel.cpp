@@ -224,7 +224,6 @@ void Dynamixel::set_torque(const std::vector<double> t){
 
 # define DEVICE_NAME "/dev/tty.usbserial-A9YL9ZZV"
 
-#include <Ravelin/VectorNd.h>
 int main(int argc,char* argv[]){
   Dynamixel dxl(argv[1]);
 
@@ -242,15 +241,14 @@ int main(int argc,char* argv[]){
   dxl_->SetTorque(0x03FF,ALL_SERVOS);
 
   double t = 0;
-  Ravelin::VectorNd velocity = Ravelin::VectorNd::zero(dxl.ids.size());
-  Ravelin::VectorNd position = Ravelin::VectorNd::zero(dxl.ids.size());
+  std::vector<double> velocity(dxl.ids.size());
+  std::vector<double> position(dxl.ids.size());
   while(1){
     t += 0.001;
 
     std::fill(position.begin(),position.end(),sin(t * 2.0 * M_PI) * M_PI * 0.5 );
 
-    std::cout  << position << std::endl;
-    dxl.set_state(std::vector<double>(position.begin(),position.end()),std::vector<double>(velocity.begin(),velocity.end()));
+    dxl.set_state(position,velocity);
   }
   return 0;
 }
