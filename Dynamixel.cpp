@@ -229,51 +229,11 @@ int main(int argc,char* argv[]){
   Dynamixel dxl(argv[1]);
 
   // LINKS robot
-  dxl.tare.push_back(-M_PI_2 * RX_24F_RAD2UNIT);
-  dxl.tare.push_back( M_PI_2 * RX_24F_RAD2UNIT);
-  dxl.tare.push_back(-M_PI_2 * RX_24F_RAD2UNIT);
-  dxl.tare.push_back( M_PI_2 * RX_24F_RAD2UNIT);
-  
-  dxl.tare.push_back(-M_PI_2 * RX_24F_RAD2UNIT);
-  dxl.tare.push_back( M_PI_2 * RX_24F_RAD2UNIT);
-  dxl.tare.push_back(-M_PI_2 * MX_64R_RAD2UNIT - 20 );
-  dxl.tare.push_back( M_PI_2 * MX_64R_RAD2UNIT - 270);
-
-  dxl.tare.push_back(0);
-  dxl.tare.push_back(0);
-  dxl.tare.push_back(0);
   dxl.tare.push_back(0);
   
   dxl.stype.push_back(Dynamixel::RX_24F);
-  dxl.stype.push_back(Dynamixel::RX_24F);
-  dxl.stype.push_back(Dynamixel::RX_24F);
-  dxl.stype.push_back(Dynamixel::RX_24F);
 
-  dxl.stype.push_back(Dynamixel::RX_24F);
-  dxl.stype.push_back(Dynamixel::RX_24F);
-  dxl.stype.push_back(Dynamixel::MX_64R);
-  dxl.stype.push_back(Dynamixel::MX_64R);
-
-  dxl.stype.push_back(Dynamixel::RX_24F);
-  dxl.stype.push_back(Dynamixel::RX_24F);
-  dxl.stype.push_back(Dynamixel::RX_24F);
-  dxl.stype.push_back(Dynamixel::RX_24F);
-
-
-  dxl.names.push_back("LF_X_1");
-  dxl.names.push_back("RF_X_1");
-  dxl.names.push_back("RH_X_1");
-  dxl.names.push_back("LH_X_1");
-
-  dxl.names.push_back("LF_Y_2");
-  dxl.names.push_back("RF_Y_2");
-  dxl.names.push_back("RH_Y_2");
-  dxl.names.push_back("LH_Y_2");
-
-  dxl.names.push_back("LF_Y_3");
-  dxl.names.push_back("RF_Y_3");
-  dxl.names.push_back("RH_Y_3");
-  dxl.names.push_back("LH_Y_3");
+  dxl.names.push_back("J1");
 
   for(int i=1;i<=dxl.names.size();i++){
     dxl.ids.push_back(i);
@@ -285,13 +245,12 @@ int main(int argc,char* argv[]){
   Ravelin::VectorNd velocity = Ravelin::VectorNd::zero(dxl.ids.size());
   Ravelin::VectorNd position = Ravelin::VectorNd::zero(dxl.ids.size());
   while(1){
-    t += 0.1;
+    t += 0.001;
 
-    //std::fill(position.begin(),position.end(),sin(t * M_PI) * M_PI * 0.1);
+    std::fill(position.begin(),position.end(),sin(t * 2.0 * M_PI) * M_PI * 0.5 );
 
     std::cout  << position << std::endl;
     dxl.set_state(std::vector<double>(position.begin(),position.end()),std::vector<double>(velocity.begin(),velocity.end()));
-    sleep(1);
   }
   return 0;
 }
